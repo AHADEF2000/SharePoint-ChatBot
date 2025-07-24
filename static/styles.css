@@ -1,0 +1,73 @@
+body {
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+  background-color: #f0f0f0;
+  direction: rtl;
+  text-align: right;
+  margin: 40px;
+}
+
+.chat {
+  max-width: 700px;
+  margin: auto;
+  background: #fff;
+  padding: 25px;
+  border-radius: 10px;
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
+}
+
+h2 {
+  text-align: center;
+  color: #333;
+  margin-bottom: 20px;
+}
+
+#messages {
+  max-height: 400px;
+  overflow-y: auto;
+  padding-bottom: 15px;
+}
+
+.msg {
+  padding: 12px;
+  margin: 10px 0;
+  border-radius: 10px;
+  max-width: 85%;
+  word-wrap: break-word;
+}
+
+.user {
+  background-color: #d1e7dd;
+  text-align: right;
+  margin-left: auto;
+}
+
+.bot {
+  background-color: #f8d7da;
+  text-align: right;
+  margin-right: auto;
+}
+
+.bot.error {
+  background-color: #f8d7da;
+  color: red;
+  font-weight: bold;
+}
+
+input, button {
+  padding: 12px;
+  font-size: 16px;
+  width: 100%;
+  margin-top: 10px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+}
+
+button {
+  background-color: #4CAF50;
+  color: white;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #45a049;
+}

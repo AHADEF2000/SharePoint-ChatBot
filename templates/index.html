@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>Document Chatbot</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <div class="chat">
+    <h2>📄 Document Chatbot</h2>
+    <div id="messages" class="messages"></div>
+    <form id="chat-form">
+      <input id="user-input" placeholder="اكتب سؤالك هنا..." autocomplete="off" />
+      <button type="submit">إرسال</button>
+    </form>
+  </div>
+
+  <script>
+    const form = document.getElementById('chat-form');
+    const input = document.getElementById('user-input');
+    const messages = document.getElementById('messages');
+
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      const question = input.value.trim();
+      if (!question) return;
+
+      // Show user message
+      messages.innerHTML += `<div class="msg user"><b>أنت:</b> ${question}</div>`;
+      input.value = "";
+
+      // Fetch response from Flask backend
+      const res = await fetch("/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question })
+      });
+
+      try {
+        const data = await res.json();
+        messages.innerHTML += `<div class="msg bot"><b>البوت:</b> ${data.answer}</div>`;
+      } catch (error) {
+        messages.innerHTML += `<div class="msg bot error">⚠️ حدث خطأ أثناء المعالجة</div>`;
+      }
+
+      messages.scrollTop = messages.scrollHeight;
+    };
+  </script>
+</body>
+</html>
