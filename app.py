@@ -2,7 +2,7 @@ import os
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 from dotenv import load_dotenv
-import fitz  # PyMuPDF for PDFs
+import fitz  # PyMuPDF
 from docx import Document as DocxDocument
 from langchain.docstore.document import Document
 from langchain.text_splitter import RecursiveCharacterTextSplitter
@@ -15,10 +15,7 @@ from langchain.memory import ConversationBufferMemory
 # Load environment variables
 load_dotenv()
 
-# No need to set this line manually — use os.getenv directly where needed
-# os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
-
-# Step 1: Extract text from PDF and Word documents
+# === Step 1: Extract text from documents ===
 def extract_text_from_files(folder_path="docs"):
     texts = []
     for filename in os.listdir(folder_path):
@@ -39,16 +36,28 @@ def extract_text_from_files(folder_path="docs"):
                 print(f"❌ Error reading {filename}: {e}")
     return texts
 
-# Step 2: Chunk the documents
+# === Step 2: Chunk documents ===
 def chunk_documents(documents):
     splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
     return splitter.split_documents(documents)
 
-# Step 3: Create a vector database
-def create_vector_db(chunks):
-    return Chroma.from_documents(chunks, OpenAIEmbeddings())
+# === Step 3: Load or create vector DB ===
+def load_or_create_vector_db(chunks, persist_dir="persist_db"):
+    os.makedirs(persist_dir, exist_ok=True)
+    has_index = any(
+        f.endswith(".sqlite") or f.endswith(".parquet")
+        for f in os.listdir(persist_dir)
+    )
+    if has_index:
+        print("🧠 Loading existing vector DB...")
+        return Chroma(persist_directory=persist_dir, embedding_function=OpenAIEmbeddings())
+    else:
+        print("📦 Creating new vector DB...")
+        vector_db = Chroma.from_documents(chunks, OpenAIEmbeddings(), persist_directory=persist_dir)
+        vector_db.persist()
+        return vector_db
 
-# Step 4: Build LangChain QA pipeline with memory
+# === Step 4: Build QA chain ===
 def build_conversational_chain(vector_db):
     memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
     return ConversationalRetrievalChain.from_llm(
@@ -57,17 +66,16 @@ def build_conversational_chain(vector_db):
         memory=memory
     )
 
-# Step 5: Prepare the chatbot
-print("🔄 Loading and indexing documents...")
+# === Step 5: Prepare the bot ===
+print("🔄 Initializing chatbot...")
 docs = extract_text_from_files("docs")
 chunks = chunk_documents(docs)
-vector_db = create_vector_db(chunks)
+vector_db = load_or_create_vector_db(chunks)
 qa_chain = build_conversational_chain(vector_db)
 chat_history = []
-
 print("✅ Chatbot is ready.")
 
-# Step 6: Set up Flask
+# === Step 6: Set up Flask ===
 app = Flask(__name__, static_folder='static', template_folder='templates')
 CORS(app)
 
@@ -97,7 +105,7 @@ def chat():
         print(f"❌ Error during QA chain: {e}")
         return jsonify({"answer": "حدث خطأ أثناء الإجابة. حاول مرة أخرى."})
 
-# ✅ FIX: Run on the port Azure expects (default is 8000)
+# === Step 7: Run with Azure-compatible port ===
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
-    app.run(host="0.0.0.0", port=port, debug=True)
+    app.run(host="0.0.0.0", port=port)
