@@ -14,7 +14,9 @@ from langchain.memory import ConversationBufferMemory
 
 # Load environment variables
 load_dotenv()
-os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
+
+# No need to set this line manually — use os.getenv directly where needed
+# os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
 
 # Step 1: Extract text from PDF and Word documents
 def extract_text_from_files(folder_path="docs"):
@@ -95,5 +97,7 @@ def chat():
         print(f"❌ Error during QA chain: {e}")
         return jsonify({"answer": "حدث خطأ أثناء الإجابة. حاول مرة أخرى."})
 
+# ✅ FIX: Run on the port Azure expects (default is 8000)
 if __name__ == "__main__":
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 8000))
+    app.run(host="0.0.0.0", port=port, debug=True)
